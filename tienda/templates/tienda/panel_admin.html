@@ -1,0 +1,122 @@
+{% extends 'tienda/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Panel de Administración - Calzados Import</h2>
+    <span class="badge bg-success fs-6">Ingresos Totales: Bs. {{ ingresos_totales }}</span>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="adminTab">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#calzadosTab">Productos en Venta</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#nuevoCalzadoTab">+ Nuevo Calzado</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#promoTab">+ Crear Promoción</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ventasTab">Registro de Ventas</button></li>
+</ul>
+
+<div class="tab-content" id="adminTabContent">
+    <!-- Lista de Calzados -->
+    <div class="tab-pane fade show active" id="calzadosTab">
+        <div class="table-responsive bg-white shadow-sm p-3 rounded">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Marca / Modelo</th>
+                        <th>Categoría</th>
+                        <th>Precio Base</th>
+                        <th>Stock Total</th>
+                        <th>Promoción Vigente</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in calzados %}
+                        <tr>
+                            <td><strong>{{ c.marca }}</strong> - {{ c.nombre }}</td>
+                            <td>{{ c.categoria.nombre }}</td>
+                            <td>Bs. {{ c.precio_base }}</td>
+                            <td><span class="badge bg-{% if c.stock_total > 5 %}info{% else %}danger{% endif %}">{{ c.stock_total }} pares</span></td>
+                            <td>
+                                {% if c.promocion_vigente %}
+                                    <span class="badge bg-danger">-{{ c.promocion_vigente.porcentaje_descuento }}% ({{ c.promocion_vigente.titulo }})</span>
+                                {% else %}
+                                    <span class="text-muted">Sin oferta</span>
+                                {% endif %}
+                            </td>
+                            <td><a href="{% url 'editar_calzado' c.id %}" class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil me-1"></i>Gestionar Tallas / Datos</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Nuevo Calzado -->
+    <div class="tab-pane fade" id="nuevoCalzadoTab">
+        <div class="card shadow-sm col-md-8 mx-auto">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">Registrar Nuevo Modelo de Calzado</h5>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="crear_calzado">
+                    {% for f in form_calzado %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ f.label }}</label>
+                            {{ f }}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-success w-100">Guardar Calzado</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crear Promoción -->
+    <div class="tab-pane fade" id="promoTab">
+        <div class="card shadow-sm col-md-8 mx-auto">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">Crear Promoción con Descuento Automático</h5>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="crear_promo">
+                    {% for f in form_promo %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ f.label }}</label>
+                            {{ f }}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-danger w-100">Publicar Promoción</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registro Ventas -->
+    <div class="tab-pane fade" id="ventasTab">
+        <div class="table-responsive bg-white shadow-sm p-3 rounded">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Código Pedido</th>
+                        <th>Cliente</th>
+                        <th>Fecha / Hora</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pedidos %}
+                        <tr>
+                            <td class="fw-bold">{{ p.codigo }}</td>
+                            <td>{{ p.cliente.username }} ({{ p.cliente.email }})</td>
+                            <td>{{ p.fecha|date:"d/m/Y H:i" }}</td>
+                            <td class="fw-bold text-success">Bs. {{ p.total }}</td>
+                            <td><span class="badge bg-success">{{ p.get_estado_display }}</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center">No hay ventas registradas todavía.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

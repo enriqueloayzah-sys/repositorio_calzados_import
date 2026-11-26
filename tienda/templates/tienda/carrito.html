@@ -1,0 +1,39 @@
+{% extends 'tienda/base.html' %}
+{% block content %}
+<h2 class="fw-bold mb-4">Carrito de Compras</h2>
+{% if filas %}
+    <div class="table-responsive bg-white shadow-sm rounded p-3 mb-4">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Talla / Color</th>
+                    <th>Precio Unit.</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in filas %}
+                    <tr>
+                        <td class="fw-semibold">{{ f.calzado_nombre }}</td>
+                        <td>Talla: {{ f.talla }} | {{ f.color }}</td>
+                        <td>Bs. {{ f.precio }}</td>
+                        <td>{{ f.cantidad }}</td>
+                        <td class="fw-bold">Bs. {{ f.subtotal }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+            <h4>Total a Pagar: <span class="text-success fw-bold">Bs. {{ total }}</span></h4>
+            <form action="{% url 'confirmar_pedido' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-circle me-1"></i>Confirmar Pedido</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info">Tu carrito de compras está vacío. <a href="{% url 'catalogo' %}">Volver al catálogo</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'tienda/base.html' %}
+{% block content %}
+<h2 class="fw-bold mb-4">Mis Compras Realizadas</h2>
+{% for p in pedidos %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-dark text-white d-flex justify-content-between">
+            <span><strong>Código Pedido:</strong> {{ p.codigo }}</span>
+            <span><strong>Fecha:</strong> {{ p.fecha|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Variante</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in p.detalles.all %}
+                        <tr>
+                            <td>{{ d.variante.calzado.marca }} {{ d.variante.calzado.nombre }}</td>
+                            <td>Talla {{ d.variante.talla }} ({{ d.variante.color }})</td>
+                            <td>{{ d.cantidad }}</td>
+                            <td>Bs. {{ d.precio_unitario }}</td>
+                            <td>Bs. {{ d.subtotal }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-end fw-bold fs-5 text-success">Total Pagado: Bs. {{ p.total }}</div>
+        </div>
+    </div>
+{% empty %}
+    <div class="alert alert-warning">Aún no has realizado ninguna compra.</div>
+{% endfor %}
+{% endblock %}

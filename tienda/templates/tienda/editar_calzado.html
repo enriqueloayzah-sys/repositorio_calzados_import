@@ -13,8 +13,15 @@
                     <input type="hidden" name="guardar_calzado" value="1">
                     {% for f in form %}
                         <div class="mb-3">
-                            <label class="form-label">{{ f.label }}</label>
-                            {{ f }}
+                            {% if f.field.widget.input_type == 'checkbox' %}
+                                <div class="form-check">
+                                    {{ f }}
+                                    <label class="form-check-label">{{ f.label }}</label>
+                                </div>
+                            {% else %}
+                                <label class="form-label">{{ f.label }}</label>
+                                {{ f }}
+                            {% endif %}
                         </div>
                     {% endfor %}
                     <button type="submit" class="btn btn-primary w-100">Actualizar Datos</button>
@@ -25,7 +32,7 @@
 
     <div class="col-md-6">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white fw-bold">Agregar Variante (Talla, Color, Stock)</div>
+            <div class="card-header bg-primary text-white fw-bold">Agregar o Actualizar Variante (Talla, Color, Stock)</div>
             <div class="card-body">
                 <form method="POST">
                     {% csrf_token %}
@@ -36,7 +43,7 @@
                             {{ f }}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="btn btn-success btn-sm w-100 mt-2">Agregar / Guardar Talla</button>
+                    <button type="submit" class="btn btn-success btn-sm w-100 mt-2">Guardar Variante / Stock</button>
                 </form>
             </div>
         </div>
@@ -44,26 +51,49 @@
         <div class="card shadow-sm">
             <div class="card-header bg-secondary text-white fw-bold">Tallas y Stock Existente</div>
             <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Talla</th>
-                            <th>Color</th>
-                            <th>Stock</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for v in variantes %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
                             <tr>
-                                <td class="fw-bold">{{ v.talla }}</td>
-                                <td>{{ v.color }}</td>
-                                <td><span class="badge bg-dark">{{ v.stock }} pares</span></td>
+                                <th>Talla</th>
+                                <th>Color</th>
+                                <th>Stock</th>
+                                <th>Acciones</th>
                             </tr>
-                        {% empty %}
-                            <tr><td colspan="3" class="text-center text-muted">Aún no agregaste ninguna talla a este calzado.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for v in variantes %}
+                                <tr>
+                                    <td style="width: 90px;">
+                                        <input type="text" name="talla" form="form-var-{{ v.id }}" value="{{ v.talla }}" class="form-control form-control-sm" required>
+                                    </td>
+                                    <td style="width: 120px;">
+                                        <input type="text" name="color" form="form-var-{{ v.id }}" value="{{ v.color }}" class="form-control form-control-sm" required>
+                                    </td>
+                                    <td style="width: 90px;">
+                                        <input type="number" name="stock" form="form-var-{{ v.id }}" value="{{ v.stock }}" min="0" class="form-control form-control-sm" required>
+                                    </td>
+                                    <td class="d-flex gap-1">
+                                        <form id="form-var-{{ v.id }}" action="{% url 'editar_variante' v.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-primary btn-sm" title="Guardar cambios">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{% url 'eliminar_variante' v.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Quitar esta talla/variante?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Quitar variante">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted">Aún no agregaste tallas a este calzado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

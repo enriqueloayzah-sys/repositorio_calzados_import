@@ -1,28 +1,64 @@
 {% extends 'tienda/base.html' %}
 {% block content %}
+{% extends 'tienda/base.html' %}
+{% block content %}
 <div class="row mb-4 align-items-center">
     <div class="col-md-6">
         <h2 class="fw-bold">Catálogo de Calzados</h2>
-        <p class="text-muted">Explora modelos exclusivos importados y aprovecha nuestras promociones.</p>
+        <p class="text-muted mb-0">Consulta modelos, tallas disponibles y promociones vigentes con código de entrega.</p>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-6 mt-3 mt-md-0">
         <form method="GET" class="d-flex gap-2">
+            {% if solo_ofertas %}
+                <input type="hidden" name="ofertas" value="1">
+            {% endif %}
+            {% if cat_seleccionada %}
+                <input type="hidden" name="categoria" value="{{ cat_seleccionada }}">
+            {% endif %}
+            {% if talla_filtro %}
+                <input type="hidden" name="talla" value="{{ talla_filtro }}">
+            {% endif %}
             <input type="text" name="q" class="form-control" placeholder="Buscar por marca o modelo..." value="{{ buscar }}">
             <button type="submit" class="btn btn-dark"><i class="bi bi-search"></i></button>
         </form>
     </div>
 </div>
 
+{% if solo_ofertas %}
+    <div class="alert alert-danger d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Promociones Vigentes:</strong> {{ promociones_vigentes|length }} oferta(s) activa(s) en este momento.
+        </div>
+        <a href="{% url 'catalogo' %}" class="btn btn-sm btn-outline-dark">Ver todo el catálogo</a>
+    </div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-3 mb-4">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white fw-semibold">Filtros</div>
             <div class="card-body">
-                <a href="{% url 'catalogo' %}" class="btn btn-sm btn-outline-secondary d-block mb-2">Todas las Categorías</a>
+                <a href="{% url 'catalogo' %}" class="btn btn-sm btn-outline-secondary d-block mb-2">Todos los Modelos</a>
                 {% for cat in categorias %}
-                    <a href="{% url 'catalogo' %}?categoria={{ cat.id }}" class="btn btn-sm btn-light d-block text-start mb-1">{{ cat.nombre }}</a>
+                    <a href="{% url 'catalogo' %}?categoria={{ cat.id }}" class="btn btn-sm {% if cat_seleccionada == cat.id|stringformat:'s' %}btn-primary{% else %}btn-light{% endif %} d-block text-start mb-1">{{ cat.nombre }}</a>
                 {% endfor %}
                 <hr>
+                <form method="GET" class="mb-3">
+                    {% if solo_ofertas %}
+                        <input type="hidden" name="ofertas" value="1">
+                    {% endif %}
+                    {% if cat_seleccionada %}
+                        <input type="hidden" name="categoria" value="{{ cat_seleccionada }}">
+                    {% endif %}
+                    {% if buscar %}
+                        <input type="hidden" name="q" value="{{ buscar }}">
+                    {% endif %}
+                    <label class="form-label small fw-semibold">Filtrar por Talla:</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="talla" class="form-control" placeholder="Ej. 38" value="{{ talla_filtro }}">
+                        <button type="submit" class="btn btn-outline-dark">Ir</button>
+                    </div>
+                </form>
                 <a href="{% url 'catalogo' %}?ofertas=1" class="btn btn-sm btn-danger d-block"><i class="bi bi-tag-fill me-1"></i>Solo Promociones</a>
             </div>
         </div>
@@ -46,7 +82,10 @@
                         <div class="card-body d-flex flex-column">
                             <span class="badge bg-secondary mb-1 align-self-start">{{ item.obj.categoria.nombre }}</span>
                             <h5 class="card-title fw-bold mb-0">{{ item.obj.marca }}</h5>
-                            <p class="card-text text-muted mb-2">{{ item.obj.nombre }}</p>
+                            <p class="card-text text-muted small mb-2">{{ item.obj.nombre }}</p>
+                            {% if item.obj.descripcion %}
+                                <p class="card-text small text-secondary mb-2">{{ item.obj.descripcion|truncatewords:14 }}</p>
+                            {% endif %}
 
                             <div class="mt-auto">
                                 {% if item.promo %}
@@ -62,15 +101,18 @@
                                     <form action="" method="POST" id="form-{{ item.obj.id }}">
                                         {% csrf_token %}
                                         <div class="mb-2">
-                                            <label class="form-label small fw-semibold">Seleccionar Talla/Color:</label>
+                                            <label class="form-label small fw-semibold">Talla / Color disponible:</label>
                                             <select name="variante_id" class="form-select form-select-sm" required onchange="this.form.action='/carrito/agregar/' + this.value + '/'">
-                                                <option value="">-- Elige una opción --</option>
+                                                <option value="">-- Elige talla y color --</option>
                                                 {% for v in item.variantes_disponibles %}
-                                                    <option value="{{ v.id }}">Talla {{ v.talla }} | {{ v.color }} (Stock: {{ v.stock }})</option>
+                                                    <option value="{{ v.id }}">Talla {{ v.talla }} | {{ v.color }} ({{ v.stock }} disp.)</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        <button type="submit" class="btn btn-dark btn-sm w-100"><i class="bi bi-cart-plus me-1"></i>Agregar al Carrito</button>
+                                        <div class="d-flex gap-2">
+                                            <input type="number" name="cantidad" value="1" min="1" class="form-control form-control-sm" style="width: 70px;" title="Cantidad">
+                                            <button type="submit" class="btn btn-dark btn-sm flex-grow-1"><i class="bi bi-cart-plus me-1"></i>Agregar</button>
+                                        </div>
                                     </form>
                                 {% else %}
                                     <button class="btn btn-secondary btn-sm w-100" disabled>Sin Stock Disponible</button>
@@ -82,7 +124,7 @@
             {% empty %}
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-emoji-frown fs-1 text-muted"></i>
-                    <p class="mt-2 text-muted">No se encontraron calzados disponibles con esos filtros.</p>
+                    <p class="mt-2 text-muted">No se encontraron calzados disponibles con esos criterios.</p>
                 </div>
             {% endfor %}
         </div>
